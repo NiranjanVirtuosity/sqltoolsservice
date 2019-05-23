@@ -117,9 +117,9 @@ namespace Microsoft.SqlTools.ServiceLayer.SchemaCopmare
                 SqlTask sqlTask = null;
                 TaskMetadata metadata = new TaskMetadata();
                 metadata.TaskOperation = operation;
-                // want to show filepath in task history instead of server and database
-                metadata.ServerName = parameters.ScriptFilePath;
-                metadata.DatabaseName = string.Empty;
+                metadata.TaskExecutionMode = parameters.TaskExecutionMode;
+                metadata.ServerName = parameters.TargetServerName;
+                metadata.DatabaseName = parameters.TargetDatabaseName;
                 metadata.Name = SR.GenerateScriptTaskName;
 
                 sqlTask = SqlTaskManagerInstance.CreateAndRun<SqlTask>(metadata);
@@ -183,13 +183,9 @@ namespace Microsoft.SqlTools.ServiceLayer.SchemaCopmare
             {
                 SchemaComparisonResult compareResult = schemaCompareResults.Value[parameters.OperationId];
                 operation = new SchemaCompareIncludeExcludeNodeOperation(parameters, compareResult);
-                SqlTask sqlTask = null;
-                TaskMetadata metadata = new TaskMetadata();
-                metadata.TaskOperation = operation;
-                metadata.Name = parameters.IncludeRequest ? SR.IncludeNodeTaskName : SR.ExcludeNodeTaskName;
 
-                sqlTask = SqlTaskManagerInstance.CreateAndRun<SqlTask>(metadata);
-
+                operation.Execute(parameters.TaskExecutionMode);
+                
                 await requestContext.SendResult(new ResultStatus()
                 {
                     Success = true,
