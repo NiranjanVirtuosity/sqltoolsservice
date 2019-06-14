@@ -4,6 +4,7 @@
 //
 using Microsoft.SqlServer.Dac.Compare;
 using Microsoft.SqlTools.Hosting.Protocol.Contracts;
+using Microsoft.SqlTools.ServiceLayer.Connection.Contracts;
 using Microsoft.SqlTools.ServiceLayer.TaskServices;
 using Microsoft.SqlTools.ServiceLayer.Utility;
 using System.Collections.Generic;
@@ -37,6 +38,11 @@ namespace Microsoft.SqlTools.ServiceLayer.SchemaCompare.Contracts
         /// Connection uri
         /// </summary>
         public string OwnerUri { get; set; }
+
+        /// <summary>
+        /// Connection details
+        /// </summary>
+        public ConnectionDetails ConnectionDetails { get; set; }
     }
 
     /// <summary>
@@ -82,12 +88,14 @@ namespace Microsoft.SqlTools.ServiceLayer.SchemaCompare.Contracts
         public SchemaUpdateAction UpdateAction { get; set; }
         public SchemaDifferenceType DifferenceType { get; set; }
         public string Name { get; set; }
-        public string SourceValue { get; set; }
-        public string TargetValue { get; set; }
+        public string[] SourceValue { get; set; }
+        public string[] TargetValue { get; set; }
         public DiffEntry Parent { get; set; }
         public List<DiffEntry> Children { get; set; }
         public string SourceScript { get; set; }
         public string TargetScript { get; set; }
+        public string SourceObjectType { get; set; }
+        public string TargetObjectType { get; set; }
     }
 
     /// <summary>

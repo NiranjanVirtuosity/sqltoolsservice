@@ -13,12 +13,11 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
-using Microsoft.SqlTools.ServiceLayer.SchemaCopmare;
 
 namespace Microsoft.SqlTools.ServiceLayer.IntegrationTests.SchemaCompare
 {
     /// <summary>
-    /// Group of tests to test non-default options and included items for schema comapre
+    /// Group of tests to test non-default options and included items for schema compare
     /// Note - adding it to new class for easy findability
     /// </summary>
     public class SchemaCompareServiceOptionsTests
@@ -107,11 +106,9 @@ END
             return options;
         }
 
-        private async Task<Mock<RequestContext<SchemaCompareResult>>> SendAndValidateSchemaCompareRequestDacpacToDacpacWithOptions(string sourceScript, string targetScript, DeploymentOptions nodiffOption, DeploymentOptions shouldDiffOption)
+        private async Task SendAndValidateSchemaCompareRequestDacpacToDacpacWithOptions(string sourceScript, string targetScript, DeploymentOptions nodiffOption, DeploymentOptions shouldDiffOption)
         {
             var result = SchemaCompareTestUtils.GetLiveAutoCompleteTestObjects();
-            var schemaCompareRequestContext = new Mock<RequestContext<SchemaCompareResult>>();
-            schemaCompareRequestContext.Setup(x => x.SendResult(It.IsAny<SchemaCompareResult>())).Returns(Task.FromResult(new object()));
 
             // create dacpacs from databases
             SqlTestDb sourceDb = await SqlTestDb.CreateNewAsync(TestServerType.OnPrem, false, null, sourceScript, "SchemaCompareSource");
@@ -139,7 +136,7 @@ END
                 SchemaCompareOperation schemaCompareOperation1 = new SchemaCompareOperation(schemaCompareParams1, null, null);
                 schemaCompareOperation1.Execute(TaskExecutionMode.Execute);
                 Assert.True(schemaCompareOperation1.ComparisonResult.IsEqual);
-                
+
                 var schemaCompareParams2 = new SchemaCompareParams
                 {
                     SourceEndpointInfo = sourceInfo,
@@ -161,16 +158,11 @@ END
                 sourceDb.Cleanup();
                 targetDb.Cleanup();
             }
-
-            return schemaCompareRequestContext;
         }
 
-        private async Task<Mock<RequestContext<SchemaCompareResult>>> SendAndValidateSchemaCompareRequestDatabaseToDatabaseWithOptions(string sourceScript, string targetScript, DeploymentOptions nodiffOption, DeploymentOptions shouldDiffOption)
+        private async Task SendAndValidateSchemaCompareRequestDatabaseToDatabaseWithOptions(string sourceScript, string targetScript, DeploymentOptions nodiffOption, DeploymentOptions shouldDiffOption)
         {
             var result = SchemaCompareTestUtils.GetLiveAutoCompleteTestObjects();
-            var schemaCompareRequestContext = new Mock<RequestContext<SchemaCompareResult>>();
-            schemaCompareRequestContext.Setup(x => x.SendResult(It.IsAny<SchemaCompareResult>())).Returns(Task.FromResult(new object()));
-
             SqlTestDb sourceDb = await SqlTestDb.CreateNewAsync(TestServerType.OnPrem, false, null, sourceScript, "SchemaCompareSource");
             SqlTestDb targetDb = await SqlTestDb.CreateNewAsync(TestServerType.OnPrem, false, null, targetScript, "SchemaCompareTarget");
             string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SchemaCompareTest");
@@ -210,7 +202,7 @@ END
                 SchemaCompareOperation schemaCompareOperation2 = new SchemaCompareOperation(schemaCompareParams2, result.ConnectionInfo, result.ConnectionInfo);
                 schemaCompareOperation2.Execute(TaskExecutionMode.Execute);
                 Assert.False(schemaCompareOperation2.ComparisonResult.IsEqual);
-                Assert.NotNull(schemaCompareOperation2.ComparisonResult.Differences);                
+                Assert.NotNull(schemaCompareOperation2.ComparisonResult.Differences);
             }
             finally
             {
@@ -218,15 +210,11 @@ END
                 sourceDb.Cleanup();
                 targetDb.Cleanup();
             }
-            return schemaCompareRequestContext;
         }
 
-        private async Task<Mock<RequestContext<SchemaCompareResult>>> SendAndValidateSchemaCompareGenerateScriptRequestDacpacToDatabaseWithOptions(string sourceScript, string targetScript, DeploymentOptions nodiffOption, DeploymentOptions shouldDiffOption)
+        private async Task SendAndValidateSchemaCompareGenerateScriptRequestDacpacToDatabaseWithOptions(string sourceScript, string targetScript, DeploymentOptions nodiffOption, DeploymentOptions shouldDiffOption)
         {
             var result = SchemaCompareTestUtils.GetLiveAutoCompleteTestObjects();
-            var schemaCompareRequestContext = new Mock<RequestContext<SchemaCompareResult>>();
-            schemaCompareRequestContext.Setup(x => x.SendResult(It.IsAny<SchemaCompareResult>())).Returns(Task.FromResult(new object()));
-
             SqlTestDb sourceDb = await SqlTestDb.CreateNewAsync(TestServerType.OnPrem, false, null, sourceScript, "SchemaCompareSource");
             SqlTestDb targetDb = await SqlTestDb.CreateNewAsync(TestServerType.OnPrem, false, null, targetScript, "SchemaCompareTarget");
             string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SchemaCompareTest");
@@ -266,7 +254,7 @@ END
                 };
 
                 SchemaCompareGenerateScriptOperation generateScriptOperation1 = new SchemaCompareGenerateScriptOperation(generateScriptParams1, schemaCompareOperation1.ComparisonResult);
-                generateScriptOperation1.Execute();
+                generateScriptOperation1.Execute(TaskExecutionMode.Script);
 
                 // validate script generation failed because there were no differences
                 Assert.False(generateScriptOperation1.ScriptGenerationResult.Success);
@@ -293,7 +281,7 @@ END
                 };
 
                 SchemaCompareGenerateScriptOperation generateScriptOperation2 = new SchemaCompareGenerateScriptOperation(generateScriptParams2, schemaCompareOperation2.ComparisonResult);
-                generateScriptOperation2.Execute();
+                generateScriptOperation2.Execute(TaskExecutionMode.Script);
 
                 // validate script generation succeeded
                 Assert.True(generateScriptOperation2.ScriptGenerationResult.Success);
@@ -306,7 +294,6 @@ END
                 sourceDb.Cleanup();
                 targetDb.Cleanup();
             }
-            return schemaCompareRequestContext;
         }
 
         /// <summary>
@@ -315,7 +302,7 @@ END
         [Fact]
         public async void SchemaCompareDacpacToDacpacOptions()
         {
-            Assert.NotNull(await SendAndValidateSchemaCompareRequestDacpacToDacpacWithOptions(Source1, Target1, GetIgnoreColumnOptions(), new DeploymentOptions()));
+            await SendAndValidateSchemaCompareRequestDacpacToDacpacWithOptions(Source1, Target1, GetIgnoreColumnOptions(), new DeploymentOptions());
         }
 
         /// <summary>
@@ -324,7 +311,7 @@ END
         [Fact]
         public async void SchemaCompareDacpacToDacpacObjectTypes()
         {
-            Assert.NotNull(await SendAndValidateSchemaCompareRequestDacpacToDacpacWithOptions(Source2, Target2, GetExcludeTableValuedFunctionOptions(), new DeploymentOptions()));
+            await SendAndValidateSchemaCompareRequestDacpacToDacpacWithOptions(Source2, Target2, GetExcludeTableValuedFunctionOptions(), new DeploymentOptions());
         }
 
         /// <summary>
@@ -333,7 +320,7 @@ END
         [Fact]
         public async void SchemaCompareDatabaseToDatabaseOptions()
         {
-            Assert.NotNull(await SendAndValidateSchemaCompareRequestDatabaseToDatabaseWithOptions(Source1, Target1, GetIgnoreColumnOptions(), new DeploymentOptions()));
+            await SendAndValidateSchemaCompareRequestDatabaseToDatabaseWithOptions(Source1, Target1, GetIgnoreColumnOptions(), new DeploymentOptions());
         }
 
         /// <summary>
@@ -342,7 +329,7 @@ END
         [Fact]
         public async void SchemaCompareDatabaseToDatabaseObjectTypes()
         {
-            Assert.NotNull(await SendAndValidateSchemaCompareRequestDatabaseToDatabaseWithOptions(Source2, Target2, GetExcludeTableValuedFunctionOptions(), new DeploymentOptions()));
+            await SendAndValidateSchemaCompareRequestDatabaseToDatabaseWithOptions(Source2, Target2, GetExcludeTableValuedFunctionOptions(), new DeploymentOptions());
         }
 
         /// <summary>
@@ -351,7 +338,7 @@ END
         [Fact]
         public async void SchemaCompareGenerateScriptDacpacToDatabaseOptions()
         {
-            Assert.NotNull(await SendAndValidateSchemaCompareGenerateScriptRequestDacpacToDatabaseWithOptions(Source1, Target1, GetIgnoreColumnOptions(), new DeploymentOptions()));
+            await SendAndValidateSchemaCompareGenerateScriptRequestDacpacToDatabaseWithOptions(Source1, Target1, GetIgnoreColumnOptions(), new DeploymentOptions());
         }
 
         /// <summary>
@@ -360,7 +347,7 @@ END
         [Fact]
         public async void SchemaCompareGenerateScriptDacpacToDatabaseObjectTypes()
         {
-            Assert.NotNull(await SendAndValidateSchemaCompareGenerateScriptRequestDacpacToDatabaseWithOptions(Source2, Target2, GetExcludeTableValuedFunctionOptions(), new DeploymentOptions()));
+            await SendAndValidateSchemaCompareGenerateScriptRequestDacpacToDatabaseWithOptions(Source2, Target2, GetExcludeTableValuedFunctionOptions(), new DeploymentOptions());
         }
 
         /// <summary>
@@ -382,26 +369,7 @@ END
             dacOptions.IgnoreSemicolonBetweenStatements = false;
             dacOptions.IgnoreWhitespace = false;
 
-            System.Reflection.PropertyInfo[] deploymentOptionsProperties = deployOptions.GetType().GetProperties();
-            System.Reflection.PropertyInfo[] ddProperties = dacOptions.GetType().GetProperties();
-
-            // Note that DatabaseSpecification and sql cmd variables list is not present in Sqltools service - its not settable and is not used by ADS options.
-            // TODO : update this test if the above options are added later
-            Assert.True(deploymentOptionsProperties.Length == ddProperties.Length - 2 , $"Number of properties is not same Deployment options : {deploymentOptionsProperties.Length} DacFx options : {ddProperties.Length}");
-
-            foreach (var deployOptionsProp in deploymentOptionsProperties)
-            {
-                var dacProp = dacOptions.GetType().GetProperty(deployOptionsProp.Name);
-                Assert.True(dacProp != null, $"DacDeploy property not present for {deployOptionsProp.Name}");
-
-                var deployOptionsValue = deployOptionsProp.GetValue(deployOptions);
-                var dacValue = dacProp.GetValue(dacOptions);
-
-                if (deployOptionsProp.Name != "ExcludeObjectTypes") // do not compare for ExcludeObjectTypes because it will be different
-                {
-                    Assert.True((deployOptionsValue == null && dacValue == null) || deployOptionsValue.Equals(dacValue), $"DacFx DacDeploy property not equal to Tools Service DeploymentOptions for { deployOptionsProp.Name}, SchemaCompareOptions value: {deployOptionsValue} and DacDeployOptions value: {dacValue} ");
-                }
-            }
+            SchemaCompareTestUtils.CompareOptions(deployOptions, dacOptions);
         }
 
         /// <summary>
@@ -413,32 +381,10 @@ END
             DeploymentOptions deployOptions = new DeploymentOptions();
             var schemaCompareRequestContext = new Mock<RequestContext<SchemaCompareOptionsResult>>();
             schemaCompareRequestContext.Setup(x => x.SendResult(It.IsAny<SchemaCompareOptionsResult>())).Returns(Task.FromResult(new object()));
-            schemaCompareRequestContext.Setup((RequestContext<SchemaCompareOptionsResult> x) => x.SendResult(It.Is<SchemaCompareOptionsResult>((options) => this.OptionsEqualsDefault(options) == true))).Returns(Task.FromResult(new object()));
+            schemaCompareRequestContext.Setup((RequestContext<SchemaCompareOptionsResult> x) => x.SendResult(It.Is<SchemaCompareOptionsResult>((options) => SchemaCompareTestUtils.ValidateOptionsEqualsDefault(options) == true))).Returns(Task.FromResult(new object()));
             
             SchemaCompareGetOptionsParams p = new SchemaCompareGetOptionsParams();
             await SchemaCompareService.Instance.HandleSchemaCompareGetDefaultOptionsRequest(p, schemaCompareRequestContext.Object);
-        }
-
-        private bool OptionsEqualsDefault(SchemaCompareOptionsResult options)
-        {
-            DeploymentOptions defaultOpt = new DeploymentOptions();
-            DeploymentOptions actualOpt = options.DefaultDeploymentOptions;
-
-            System.Reflection.PropertyInfo[] deploymentOptionsProperties = defaultOpt.GetType().GetProperties();
-            foreach(var v in deploymentOptionsProperties)
-            {
-                var defaultP = v.GetValue(defaultOpt);
-                var actualP = v.GetValue(actualOpt);
-                if (v.Name == "ExcludeObjectTypes")
-                {
-                    Assert.True((defaultP as ObjectType[]).Length == (actualP as ObjectType[]).Length, $"Number of excluded objects is different; expected: {(defaultP as ObjectType[]).Length} actual: {(actualP as ObjectType[]).Length}");
-                }
-                else
-                {
-                    Assert.True((defaultP == null && actualP == null) || defaultP.Equals(actualP), $"Actual Property from Service is not equal to default property for { v.Name}, Actual value: {actualP} and Default value: {defaultP}");
-                }
-            }
-            return true;
         }
     }
 }
